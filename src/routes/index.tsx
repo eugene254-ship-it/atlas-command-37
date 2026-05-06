@@ -33,7 +33,7 @@ function Index() {
             <div className="mono text-[10px] text-muted-foreground">AUTONOMOUS ENTERPRISE COMMAND</div>
           </div>
         </div>
-        <div className="mono text-[10px] text-muted-foreground hidden md:block">
+        <div className="mono text-[10px] text-muted-foreground hidden md:block" suppressHydrationWarning>
           NODE-NBO-01 · v1.0 · UTC {clock}
         </div>
       </div>
