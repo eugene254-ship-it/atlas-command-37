@@ -1,0 +1,45 @@
+name: Build & CSS Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate styles.css (strict CSS parser)
+        run: bun run validate:css
+
+      - name: Build (dev mode, verbose Tailwind/PostCSS logs)
+        env:
+          DEBUG: "tailwindcss:*,vite:*"
+        run: |
+          set -o pipefail
+          bun run vite build --mode development --debug --logLevel info 2>&1 | tee build.log
+
+      - name: Fail on Tailwind / PostCSS parse errors
+        run: |
+          if grep -E "(Missing opening \{|@tailwindcss/vite:generate|PostCSS|CssSyntaxError)" build.log | grep -iE "(error|failed)"; then
+            echo "::error::Tailwind/PostCSS parse error detected in build log."
+            exit 1
+          fi
+
+      - name: Upload verbose build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 14
