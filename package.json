@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "validate:css": "node scripts/validate-css.mjs",
+    "prebuild": "npm run validate:css",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:verbose": "DEBUG=tailwindcss:*,vite:* node scripts/validate-css.mjs && vite build --mode development --debug --logLevel info",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
