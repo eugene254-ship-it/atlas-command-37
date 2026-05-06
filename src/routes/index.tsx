@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { StatusBar } from "@/components/atlas/StatusBar";
 import { Hero } from "@/components/atlas/Hero";
 import { IntelligenceFeed } from "@/components/atlas/IntelligenceFeed";
@@ -13,6 +14,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [clock, setClock] = useState("");
+  useEffect(() => {
+    const tick = () => setClock(new Date().toISOString().slice(11, 19));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
   return (
     <main className="min-h-screen px-4 md:px-8 py-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-4">
@@ -26,7 +34,7 @@ function Index() {
           </div>
         </div>
         <div className="mono text-[10px] text-muted-foreground hidden md:block">
-          NODE-NBO-01 · v1.0 · UTC {new Date().toISOString().slice(11, 19)}
+          NODE-NBO-01 · v1.0 · UTC {clock}
         </div>
       </div>
 
