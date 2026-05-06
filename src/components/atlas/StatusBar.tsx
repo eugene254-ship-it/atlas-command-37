@@ -31,11 +31,18 @@ export function StatusBar() {
   );
 }
 
-function Dot({ color }: { color: string }) {
+function Dot({ color }: { color: "signal-cyan" | "signal-amber" | "signal-emerald" | "signal-red" }) {
+  const map = {
+    "signal-cyan": "var(--signal-cyan)",
+    "signal-amber": "var(--signal-amber)",
+    "signal-emerald": "var(--signal-emerald)",
+    "signal-red": "var(--signal-red)",
+  } as const;
+  const c = map[color];
   return (
     <span className="relative inline-flex h-2 w-2">
-      <span className={`absolute inset-0 rounded-full bg-${color} opacity-60 animate-ping`} />
-      <span className={`relative inline-flex h-2 w-2 rounded-full bg-${color}`} />
+      <span className="absolute inset-0 rounded-full opacity-60 animate-ping" style={{ background: c }} />
+      <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: c }} />
     </span>
   );
 }
