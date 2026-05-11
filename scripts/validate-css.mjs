@@ -10,20 +10,70 @@
  *  5. Confirms src/styles.css is the ONLY top-level Tailwind/PostCSS input
  *     (i.e. only one file imports "tailwindcss").
  *
+ * Flags:
+ *   --json=<path>   Write a machine-readable JSON summary to <path>.
+ *   --github        Also emit GitHub Actions ::error file=...,line=... annotations.
+ *   --quiet         Suppress non-error stdout.
+ *
  * Exits non-zero with a clear, line-numbered error on failure.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { join, relative } from "node:path";
+import { dirname } from "node:path";
 
 const ROOT = process.cwd();
 const ENTRY = "src/styles.css";
 
+const args = process.argv.slice(2);
+const jsonArg = args.find((a) => a.startsWith("--json="));
+const JSON_OUT = jsonArg ? jsonArg.slice("--json=".length) : null;
+const GITHUB = args.includes("--github") || process.env.GITHUB_ACTIONS === "true";
+const QUIET = args.includes("--quiet");
+
+const errors = [];
+const checks = [];
+
+function record(check, passed, detail) {
+  checks.push({ check, passed, detail: detail ?? null });
+}
+function annotate(file, line, message) {
+  if (GITHUB) {
+    const safe = message.replace(/\n/g, " ");
+    console.log(`::error file=${file}${line ? `,line=${line}` : ""}::${safe}`);
+  }
+}
 function fail(msg) {
+  errors.push(msg);
   console.error(`\n\x1b[31m[validate-css] ${msg}\x1b[0m\n`);
-  process.exit(1);
+  finish(1);
 }
 function ok(msg) {
-  console.log(`\x1b[32m[validate-css]\x1b[0m ${msg}`);
+  if (!QUIET) console.log(`\x1b[32m[validate-css]\x1b[0m ${msg}`);
+}
+function finish(code) {
+  if (JSON_OUT) {
+    try {
+      mkdirSync(dirname(JSON_OUT), { recursive: true });
+      writeFileSync(
+        JSON_OUT,
+        JSON.stringify(
+          {
+            entry: ENTRY,
+            ok: code === 0,
+            errors,
+            checks,
+            timestamp: new Date().toISOString(),
+          },
+          null,
+          2,
+        ),
+      );
+    } catch (e) {
+      console.error(`[validate-css] failed to write JSON summary: ${e.message}`);
+    }
+  }
+  process.exit(code);
 }
 
 let css;
@@ -67,7 +117,10 @@ function sanitize(src) {
 }
 
 const { out: clean, error } = sanitize(css);
-if (error) fail(error);
+if (error) {
+  annotate(ENTRY, 1, error);
+  fail(error);
+}
 
 // Brace + paren balance with line tracking.
 let depth = 0, parens = 0, line = 1;
@@ -79,13 +132,19 @@ for (let i = 0; i < clean.length; i++) {
   else if (c === "}") {
     depth--;
     stack.pop();
-    if (depth < 0) fail(`Unmatched closing "}" at line ${line} in ${ENTRY}`);
+    if (depth < 0) { annotate(ENTRY, line, `Unmatched closing "}"`); fail(`Unmatched closing "}" at line ${line} in ${ENTRY}`); }
   }
   else if (c === "(") parens++;
-  else if (c === ")") { parens--; if (parens < 0) fail(`Unmatched ")" at line ${line}`); }
+  else if (c === ")") { parens--; if (parens < 0) { annotate(ENTRY, line, `Unmatched ")"`); fail(`Unmatched ")" at line ${line}`); } }
 }
-if (depth !== 0) fail(`Unbalanced braces in ${ENTRY}: ${depth} unclosed block(s) opened at line(s) ${stack.join(", ")}`);
-if (parens !== 0) fail(`Unbalanced parentheses in ${ENTRY}: net ${parens}`);
+if (depth !== 0) {
+  const ln = stack[0] ?? 1;
+  annotate(ENTRY, ln, `Unbalanced braces: ${depth} unclosed block(s)`);
+  fail(`Unbalanced braces in ${ENTRY}: ${depth} unclosed block(s) opened at line(s) ${stack.join(", ")}`);
+}
+if (parens !== 0) { annotate(ENTRY, 1, `Unbalanced parentheses: net ${parens}`); fail(`Unbalanced parentheses in ${ENTRY}: net ${parens}`); }
+record("brace-balance", true);
+record("paren-balance", true);
 
 // At-rules that MUST be followed by a block.
 const blockAtRules = /@(layer|keyframes|theme|media|supports|font-face|page|container)\b[^;{}]*?(\{|;)/g;
@@ -99,10 +158,12 @@ while ((m = blockAtRules.exec(clean)) !== null) {
     const ln = upto.split("\n").length;
     // @layer name; (declaration form) is valid; others aren't
     if (!/^@layer\b/.test(m[0])) {
+      annotate(ENTRY, ln, `@${m[1]} must be followed by a block "{ ... }"`);
       fail(`@${m[1]} must be followed by a block "{ ... }" — saw ";" at line ${ln}`);
     }
   }
 }
+record("at-rule-blocks", true);
 
 ok(`${ENTRY} parsed cleanly (${lines.length} lines, ${depth === 0 ? "balanced" : "UNBALANCED"} braces).`);
 
@@ -129,3 +190,6 @@ if (tailwindInputs.length > 1) {
 const onlyInput = relative(ROOT, tailwindInputs[0]).replaceAll("\\", "/");
 if (onlyInput !== ENTRY) fail(`Tailwind input is "${onlyInput}", expected "${ENTRY}".`);
 ok(`Confirmed single Tailwind input: ${ENTRY}`);
+record("single-tailwind-input", true, ENTRY);
+
+finish(0);
