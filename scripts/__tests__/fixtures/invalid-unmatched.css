@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+:root {
+  --foo: 1;
+}
+}
+/* stray extra closing brace above */
