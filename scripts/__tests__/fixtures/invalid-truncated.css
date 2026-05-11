@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    color: red;
+  }
+/* missing closing brace for @layer base — file truncated */

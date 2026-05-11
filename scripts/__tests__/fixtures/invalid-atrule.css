@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+@media screen;
+/* @media must be a block, not a declaration */
