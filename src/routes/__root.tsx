@@ -76,10 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Atlas Sanctum: an autonomous enterprise command system turning live signals into autonomous action." },
       { name: "author", content: "Atlas Sanctum" },
       { property: "og:title", content: "Atlas Sanctum — Autonomous Enterprise Command" },
-      { property: "og:description", content: "From signals to autonomous action. A live, multi-agent intelligence command center." },
+      { property: "og:description", content: "Atlas Sanctum: an autonomous enterprise command system turning live signals into autonomous action." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Atlas Sanctum — Autonomous Enterprise Command" },
+      { name: "twitter:description", content: "Atlas Sanctum: an autonomous enterprise command system turning live signals into autonomous action." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/53ef8cbb-792a-4b48-afdb-a5bf881dec99/id-preview-2d94efa5--8d6a71eb-56e3-4c27-b258-d673b5b81dc9.lovable.app-1778912115582.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/53ef8cbb-792a-4b48-afdb-a5bf881dec99/id-preview-2d94efa5--8d6a71eb-56e3-4c27-b258-d673b5b81dc9.lovable.app-1778912115582.png" },
     ],
     links: [
       {
