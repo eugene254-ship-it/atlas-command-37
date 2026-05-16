@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+:root {
+  --foo: oklch(0.5 0.1 200;
+  /* missing closing ) on oklch() above */
+}
