@@ -19,8 +19,24 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Validate styles.css (strict CSS parser)
-        run: bun run validate:css
+      - name: Run validator unit tests
+        run: bun run test:validate-css
+
+      - name: Validate tailwind/postcss configs (PR annotations on failure)
+        run: bun run validate:configs -- --github
+
+      - name: Validate styles.css (PR annotations + JSON summary)
+        run: |
+          mkdir -p artifacts
+          bun run validate:css -- --github --json=artifacts/validate-css.json
+
+      - name: Upload validate-css JSON summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-css-summary
+          path: artifacts/validate-css.json
+          retention-days: 14
 
       - name: Build (dev mode, verbose Tailwind/PostCSS logs)
         env:
